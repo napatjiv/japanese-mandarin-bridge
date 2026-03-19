@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --jp-accent: #f97316;
+  --cn-accent: #3b82f6;
+  --card-flip-duration: 400ms;
+}
+
+body {
+  font-family: 'Inter', 'Noto Sans JP', 'Noto Sans SC', sans-serif;
+  @apply bg-gray-50 text-gray-900 antialiased;
+}
+
+.dark body {
+  @apply bg-gray-950 text-gray-100;
+}
+
+/* Card flip */
+.flip-card {
+  perspective: 1000px;
+}
+
+.flip-card-inner {
+  transition: transform var(--card-flip-duration) ease-in-out;
+  transform-style: preserve-3d;
+}
+
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* Kanji display */
+.kanji-display {
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.kanji-cn {
+  font-family: 'Noto Sans SC', 'Noto Sans TC', sans-serif;
+}
+
+/* Frequency meter animation */
+.freq-bar {
+  transition: width 0.6s ease-out, background-color 0.6s ease-out;
+}
+
+/* Smooth page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-gray-700;
+}
