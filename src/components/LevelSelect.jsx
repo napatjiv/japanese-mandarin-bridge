@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LEVELS, LEVEL_CONFIG, loadVocab } from '../data'
+import { LEVELS, LEVEL_CONFIG } from '../data'
 import { loadProgress } from '../utils/storage'
 import { useStreak } from '../hooks/useStreak'
 import ProgressBar from './ProgressBar'
@@ -15,19 +15,13 @@ const levelColors = {
 
 function LevelCard({ levelKey, config }) {
   const navigate = useNavigate()
-  const [known, setKnown] = useState(0)
   const wordCount = config.wordCount
   const hasData = wordCount > 0
   const colors = levelColors[config.color]
 
-  useEffect(() => {
-    if (!hasData) return
-    loadVocab(levelKey).then(vocab => {
-      const progress = loadProgress(levelKey)
-      const k = vocab.filter(w => progress.cards[w.id]?.status === 'known').length
-      setKnown(k)
-    })
-  }, [levelKey, hasData])
+  // Count known cards from localStorage progress (no need to load full vocab)
+  const progress = hasData ? loadProgress(levelKey) : { cards: {} }
+  const known = Object.values(progress.cards).filter(c => c.status === 'known').length
 
   return (
     <button
