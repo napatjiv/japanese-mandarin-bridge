@@ -1,7 +1,7 @@
 import FrequencyMeter from './FrequencyMeter'
 import SelfRating from './SelfRating'
 
-export default function WordDetail({ word, cardStatus, onRate, onClose }) {
+export default function WordDetail({ word, cardStatus, onRate, onClose, level }) {
   return (
     <div className="w-full max-w-lg mx-auto">
       {/* Back button */}
@@ -20,7 +20,7 @@ export default function WordDetail({ word, cardStatus, onRate, onClose }) {
         <div className="bg-gradient-to-b from-jp-50 to-white p-6 border-b border-gray-100">
           <div className="flex items-center gap-2 mb-4">
             <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-jp-100 text-jp-600 rounded-full">
-              JLPT N1
+              JLPT {level ? level.toUpperCase() : 'N1'}
             </span>
             <span className="px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-widest bg-gray-100 text-gray-600 rounded-full">
               {word.category}

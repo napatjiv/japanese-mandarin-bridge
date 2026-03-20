@@ -1,30 +1,47 @@
 import { useState, useCallback } from 'react'
-import { Routes, Route, useNavigate } from 'react-router-dom'
-import Layout from './components/Layout'
+import { Routes, Route, useNavigate, useOutletContext, Navigate } from 'react-router-dom'
+import LevelSelect from './components/LevelSelect'
+import LevelLayout from './components/LevelLayout'
 import FlashCard from './components/FlashCard'
 import WordList from './components/WordList'
 import WordDetail from './components/WordDetail'
 import StatsView from './components/StatsView'
 import ProgressBar from './components/ProgressBar'
-import { useProgress } from './hooks/useProgress'
-import { useStreak } from './hooks/useStreak'
-import vocabData from './data/vocab.json'
+import { LEVEL_CONFIG } from './data'
 
-// -- Landing Page --
-function HomePage({ stats, streak }) {
+// -- Level Home Page --
+function LevelHomePage() {
   const navigate = useNavigate()
+  const { level, vocabData, stats, streak } = useOutletContext()
+  const config = LEVEL_CONFIG[level]
+
+  if (vocabData.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
+        <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          {config.label} <span className="text-cn-500">Mandarin</span> Bridge
+        </h1>
+        <p className="text-lg text-gray-500 mb-6">Coming Soon</p>
+        <p className="text-sm text-gray-400 max-w-sm mb-8">
+          Vocabulary for JLPT {config.label} is being prepared. Check back later!
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-xl transition-colors"
+        >
+          Back to Levels
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
       <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-        N1 <span className="text-cn-500">Mandarin</span> Bridge
+        {config.label} <span className="text-cn-500">Mandarin</span> Bridge
       </h1>
       <p className="text-lg text-gray-500 max-w-md mb-8">
-        N1 is hard. Mandarin makes it easy.
-      </p>
-      <p className="text-sm text-gray-400 max-w-sm mb-10 leading-relaxed">
-        Many "rare" JLPT N1 kanji are everyday vocabulary in Mandarin Chinese.
-        Learn both at once — for almost no extra effort.
+        {config.description} — bridged through Mandarin.
       </p>
 
       {/* Stats summary */}
@@ -50,7 +67,7 @@ function HomePage({ stats, streak }) {
 
       {/* CTA */}
       <button
-        onClick={() => navigate('/review')}
+        onClick={() => navigate(`/${level}/review`)}
         className="px-8 py-3.5 bg-cn-500 hover:bg-cn-600 text-white font-semibold rounded-xl shadow-lg shadow-cn-200 transition-all hover:scale-[1.02] active:scale-[0.98] text-base"
       >
         Start Review
@@ -58,14 +75,14 @@ function HomePage({ stats, streak }) {
 
       <div className="flex items-center gap-4 mt-6">
         <button
-          onClick={() => navigate('/browse')}
+          onClick={() => navigate(`/${level}/browse`)}
           className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
           Browse Words
         </button>
         <span className="text-gray-300">|</span>
         <button
-          onClick={() => navigate('/stats')}
+          onClick={() => navigate(`/${level}/stats`)}
           className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
           View Stats
@@ -82,12 +99,20 @@ function HomePage({ stats, streak }) {
 }
 
 // -- Review Page --
-function ReviewPage({ getCardStatus, updateCardStatus, recordActivity }) {
+function ReviewPage() {
+  const { level, vocabData, getCardStatus, updateCardStatus, recordActivity } = useOutletContext()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sessionWords] = useState(() => {
-    // Sort by frequency desc, prioritize unlearned
     return [...vocabData].sort((a, b) => b.mandarin_freq - a.mandarin_freq)
   })
+
+  if (sessionWords.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+        <p className="text-lg text-gray-500">No words available yet for this level.</p>
+      </div>
+    )
+  }
 
   const word = sessionWords[currentIndex]
   const status = getCardStatus(word.id)
@@ -115,14 +140,25 @@ function ReviewPage({ getCardStatus, updateCardStatus, recordActivity }) {
         onPrev={handlePrev}
         current={currentIndex + 1}
         total={sessionWords.length}
+        level={level}
       />
     </div>
   )
 }
 
 // -- Browse Page --
-function BrowsePage({ getCardStatus, updateCardStatus, recordActivity }) {
+function BrowsePage() {
+  const { level, vocabData, getCardStatus, updateCardStatus, recordActivity } = useOutletContext()
   const [selectedWord, setSelectedWord] = useState(null)
+
+  if (vocabData.length === 0) {
+    return (
+      <div className="py-4">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Browse Words</h2>
+        <p className="text-gray-500">No words available yet for this level.</p>
+      </div>
+    )
+  }
 
   if (selectedWord) {
     const status = getCardStatus(selectedWord.id)
@@ -136,6 +172,7 @@ function BrowsePage({ getCardStatus, updateCardStatus, recordActivity }) {
             recordActivity()
           }}
           onClose={() => setSelectedWord(null)}
+          level={level}
         />
       </div>
     )
@@ -154,7 +191,9 @@ function BrowsePage({ getCardStatus, updateCardStatus, recordActivity }) {
 }
 
 // -- Stats Page --
-function StatsPage({ stats, freqStats, streak }) {
+function StatsPage() {
+  const { stats, freqStats, streak } = useOutletContext()
+
   return (
     <div className="py-4">
       <h2 className="text-xl font-bold text-gray-900 mb-4">Your Progress</h2>
@@ -165,38 +204,15 @@ function StatsPage({ stats, freqStats, streak }) {
 
 // -- App --
 export default function App() {
-  const { getCardStatus, updateCardStatus, stats, freqStats } = useProgress()
-  const { streak, recordActivity } = useStreak()
-
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<HomePage stats={stats} streak={streak} />} />
-        <Route
-          path="/review"
-          element={
-            <ReviewPage
-              getCardStatus={getCardStatus}
-              updateCardStatus={updateCardStatus}
-              recordActivity={recordActivity}
-            />
-          }
-        />
-        <Route
-          path="/browse"
-          element={
-            <BrowsePage
-              getCardStatus={getCardStatus}
-              updateCardStatus={updateCardStatus}
-              recordActivity={recordActivity}
-            />
-          }
-        />
-        <Route
-          path="/stats"
-          element={<StatsPage stats={stats} freqStats={freqStats} streak={streak} />}
-        />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route path="/" element={<LevelSelect />} />
+      <Route path="/:level" element={<LevelLayout />}>
+        <Route index element={<LevelHomePage />} />
+        <Route path="review" element={<ReviewPage />} />
+        <Route path="browse" element={<BrowsePage />} />
+        <Route path="stats" element={<StatsPage />} />
+      </Route>
+    </Routes>
   )
 }

@@ -1,14 +1,16 @@
-const STORAGE_KEY = 'n1bridge_progress'
+const getStorageKey = (level) => `jmbridge_${level}_progress`
+const STREAK_KEY = 'jmbridge_streak'
 
 const defaultState = {
   cards: {},
-  streak: { current: 0, last_active: null },
   settings: { theme: 'light', default_sort: 'freq_desc' },
 }
 
-export function loadProgress() {
+const defaultStreak = { current: 0, last_active: null }
+
+export function loadProgress(level) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(getStorageKey(level))
     if (!raw) return defaultState
     return JSON.parse(raw)
   } catch {
@@ -16,21 +18,21 @@ export function loadProgress() {
   }
 }
 
-export function saveProgress(state) {
+export function saveProgress(level, state) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    localStorage.setItem(getStorageKey(level), JSON.stringify(state))
   } catch {
     // localStorage may be full or unavailable
   }
 }
 
-export function getCardStatus(cardId) {
-  const state = loadProgress()
+export function getCardStatus(level, cardId) {
+  const state = loadProgress(level)
   return state.cards[cardId] || { status: 'new', last_seen: null, times_seen: 0 }
 }
 
-export function updateCardStatus(cardId, status) {
-  const state = loadProgress()
+export function updateCardStatus(level, cardId, status) {
+  const state = loadProgress(level)
   const today = new Date().toISOString().split('T')[0]
   const existing = state.cards[cardId] || { status: 'new', last_seen: null, times_seen: 0 }
 
@@ -40,47 +42,72 @@ export function updateCardStatus(cardId, status) {
     times_seen: existing.times_seen + 1,
   }
 
-  saveProgress(state)
+  saveProgress(level, state)
   return state
 }
 
 export function getStreak() {
-  const state = loadProgress()
-  return state.streak
+  try {
+    const raw = localStorage.getItem(STREAK_KEY)
+    if (!raw) return defaultStreak
+    return JSON.parse(raw)
+  } catch {
+    return defaultStreak
+  }
 }
 
 export function updateStreak() {
-  const state = loadProgress()
+  const streak = getStreak()
   const today = new Date().toISOString().split('T')[0]
-  const lastActive = state.streak.last_active
 
-  if (lastActive === today) {
-    return state.streak
+  if (streak.last_active === today) {
+    return streak
   }
 
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
   const yesterdayStr = yesterday.toISOString().split('T')[0]
 
-  if (lastActive === yesterdayStr) {
-    state.streak.current += 1
+  if (streak.last_active === yesterdayStr) {
+    streak.current += 1
   } else {
-    state.streak.current = 1
+    streak.current = 1
   }
 
-  state.streak.last_active = today
-  saveProgress(state)
-  return state.streak
+  streak.last_active = today
+  try {
+    localStorage.setItem(STREAK_KEY, JSON.stringify(streak))
+  } catch {}
+  return streak
 }
 
-export function getSettings() {
-  const state = loadProgress()
+export function getSettings(level) {
+  const state = loadProgress(level)
   return state.settings
 }
 
-export function updateSettings(newSettings) {
-  const state = loadProgress()
+export function updateSettings(level, newSettings) {
+  const state = loadProgress(level)
   state.settings = { ...state.settings, ...newSettings }
-  saveProgress(state)
+  saveProgress(level, state)
   return state.settings
+}
+
+export function migrateFromV1() {
+  const oldKey = 'n1bridge_progress'
+  const newKey = getStorageKey('n1')
+  try {
+    const old = localStorage.getItem(oldKey)
+    if (old && !localStorage.getItem(newKey)) {
+      const parsed = JSON.parse(old)
+      // Extract streak to global key
+      if (parsed.streak) {
+        localStorage.setItem(STREAK_KEY, JSON.stringify(parsed.streak))
+      }
+      // Save cards and settings to n1 progress
+      const { streak, ...rest } = parsed
+      localStorage.setItem(newKey, JSON.stringify(rest))
+      localStorage.removeItem(oldKey)
+    }
+  } catch {}
 }

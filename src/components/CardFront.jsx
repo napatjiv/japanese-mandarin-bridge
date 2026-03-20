@@ -1,9 +1,9 @@
-export default function CardFront({ word }) {
+export default function CardFront({ word, level }) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-6 py-8">
       {/* JLPT tag */}
       <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-jp-100 text-jp-600 rounded-full mb-6">
-        JLPT N1
+        JLPT {level ? level.toUpperCase() : 'N1'}
       </span>
 
       {/* Kanji display */}

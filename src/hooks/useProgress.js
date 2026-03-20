@@ -1,18 +1,19 @@
 import { useState, useCallback } from 'react'
 import { loadProgress, updateCardStatus as storageUpdateCard, saveProgress } from '../utils/storage'
-import vocabData from '../data/vocab.json'
+import { getVocab } from '../data'
 
-export function useProgress() {
-  const [state, setState] = useState(() => loadProgress())
+export function useProgress(level) {
+  const [state, setState] = useState(() => loadProgress(level))
+  const vocabData = getVocab(level)
 
   const getCardStatus = useCallback((cardId) => {
     return state.cards[cardId] || { status: 'new', last_seen: null, times_seen: 0 }
   }, [state.cards])
 
   const updateCardStatus = useCallback((cardId, status) => {
-    const newState = storageUpdateCard(cardId, status)
+    const newState = storageUpdateCard(level, cardId, status)
     setState(newState)
-  }, [])
+  }, [level])
 
   const stats = {
     total: vocabData.length,
@@ -40,10 +41,10 @@ export function useProgress() {
   })
 
   const resetProgress = useCallback(() => {
-    const fresh = { cards: {}, streak: state.streak, settings: state.settings }
-    saveProgress(fresh)
+    const fresh = { cards: {}, settings: state.settings }
+    saveProgress(level, fresh)
     setState(fresh)
-  }, [state.streak, state.settings])
+  }, [level, state.settings])
 
   return { state, getCardStatus, updateCardStatus, stats, freqStats, resetProgress }
 }

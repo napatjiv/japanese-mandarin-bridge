@@ -3,7 +3,7 @@ import CardFront from './CardFront'
 import CardBack from './CardBack'
 import SelfRating from './SelfRating'
 
-export default function FlashCard({ word, cardStatus, onRate, onNext, onPrev, current, total }) {
+export default function FlashCard({ word, cardStatus, onRate, onNext, onPrev, current, total, level }) {
   const [isFlipped, setIsFlipped] = useState(false)
 
   // Reset flip state when word changes
@@ -86,7 +86,7 @@ export default function FlashCard({ word, cardStatus, onRate, onNext, onPrev, cu
           {/* Front */}
           <div className="flip-card-front absolute inset-0 w-full bg-white rounded-2xl shadow-lg border border-gray-100"
                style={{ minHeight: '480px' }}>
-            <CardFront word={word} />
+            <CardFront word={word} level={level} />
           </div>
 
           {/* Back */}

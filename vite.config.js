@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/n1-mandarin-bridge/',
+  base: '/jp-mandarin-bridge/',
 })
