@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LEVELS, LEVEL_CONFIG, getVocab } from '../data'
+import { LEVELS, LEVEL_CONFIG, loadVocab } from '../data'
 import { loadProgress } from '../utils/storage'
 import { useStreak } from '../hooks/useStreak'
 import ProgressBar from './ProgressBar'
@@ -14,15 +15,19 @@ const levelColors = {
 
 function LevelCard({ levelKey, config }) {
   const navigate = useNavigate()
-  const vocab = getVocab(levelKey)
-  const hasData = vocab.length > 0
+  const [known, setKnown] = useState(0)
+  const wordCount = config.wordCount
+  const hasData = wordCount > 0
   const colors = levelColors[config.color]
 
-  let known = 0
-  if (hasData) {
-    const progress = loadProgress(levelKey)
-    known = vocab.filter(w => progress.cards[w.id]?.status === 'known').length
-  }
+  useEffect(() => {
+    if (!hasData) return
+    loadVocab(levelKey).then(vocab => {
+      const progress = loadProgress(levelKey)
+      const k = vocab.filter(w => progress.cards[w.id]?.status === 'known').length
+      setKnown(k)
+    })
+  }, [levelKey, hasData])
 
   return (
     <button
@@ -46,14 +51,14 @@ function LevelCard({ levelKey, config }) {
         </div>
         <div className="text-right">
           {hasData ? (
-            <p className="text-sm font-bold text-gray-700">{vocab.length} words</p>
+            <p className="text-sm font-bold text-gray-700">{wordCount} words</p>
           ) : (
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Coming Soon</span>
           )}
         </div>
       </div>
       {hasData && (
-        <ProgressBar value={known} max={vocab.length} label={`${known}/${vocab.length} learned`} size="sm" />
+        <ProgressBar value={known} max={wordCount} label={`${known}/${wordCount} learned`} size="sm" />
       )}
     </button>
   )
